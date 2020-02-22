@@ -30,6 +30,33 @@ function parseData(csvData) {
   });
 }
 
+function parseDataMod(csvData) {
+  return new Promise((resolve, reject) => {
+    let parsedData = [];
+    csv.parseString(csvData,
+      {
+        // headers: ['vehType', 'routeId', 'lat', 'lng', 'speed', 'degree', 'vehId'],
+        // ignoreEmpty: true,
+      })
+      .validate((row) => row[0] !== '4')
+      .on('data', (row) => parsedData.push(row))
+      .on('end', (rowCount) => {
+        parsedData.forEach((currentItem) => {
+          currentItem[2] /= 1000000; // @@@ hack
+          currentItem[3] /= 1000000; // convert latitude and longitude
+          currentItem.pop(); // removes last index from array which is always empty
+        });
+        let asd = Object.create({});
+        asd = {
+          date_parsed: new Date(),
+          vehicles_data: parsedData,
+        };
+        console.log(`parsed ${rowCount} items`);
+        resolve(asd);
+      });
+  });
+}
+
 let lastModifiedDate;
 
 async function initBackgroundWorker() {
@@ -40,12 +67,13 @@ async function initBackgroundWorker() {
     if (modifiedDate > lastModifiedDate || lastModifiedDate === undefined) {
       console.log('new data lets go');
       lastModifiedDate = modifiedDate;
-      const gpsDataJson = await parseData(response.data);
+      const gpsDataJson = await parseDataMod(response.data);
       const database = await getDatabase();
-      await database.collection(collectionName).deleteMany({});
-      await database.collection(collectionName).insertMany(gpsDataJson);
+      // await database.collection(collectionName).deleteMany({});
+      await database.collection(collectionName).insertMany([
+        { data: gpsDataJson.vehicles_data, date_parsed: gpsDataJson.date_parsed }]);
       // send to redis
-      const msg = JSON.stringify({ type: 'vehicles', text: gpsDataJson });
+      const msg = JSON.stringify({ type: 'vehicles', text: gpsDataJson.vehicles_data });
       redisPub.set('latest_data', msg);
       redisPub.publish('vehiclesdata', msg);
     }

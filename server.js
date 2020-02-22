@@ -35,15 +35,10 @@ let wsClientsCount = 0;
 
 backgroundWorker();
 
-// IN WSS
-// IF ANY CLIENTS CONNECTED
-//    CHECK IF JOB.RUNNING ELSE PASS
-// IF CLIENTS 0 THEN DELETE JOB
 wss.on('connection', (ws, req) => {
   wsClientsCount += 1;
   console.log(`current websocket clients: ${wsClientsCount}`);
   ws.on('message', (data) => {
-    console.log(data);
     const msg = JSON.parse(data);
     switch (msg.type) {
       case 'transferData':
