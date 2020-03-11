@@ -1,6 +1,8 @@
+const redis = require('redis');
 const { MongoClient } = require('mongodb');
 
 let mongoDatabase = null;
+let redisClient = null;
 
 const collectionName = 'vehicles';
 
@@ -19,8 +21,17 @@ async function getDatabase() {
   return mongoDatabase;
 }
 
+async function getRedisClient() {
+  if (!redisClient) {
+    redisClient = redis.createClient();
+  }
+  return redisClient;
+}
+
+
 module.exports = {
   getDatabase,
   initializeDatabase,
   collectionName,
+  getRedisClient,
 };

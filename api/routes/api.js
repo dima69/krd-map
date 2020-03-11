@@ -4,59 +4,62 @@ const router = express.Router();
 
 const { getVehiclesAll, getVehiclesByType, getVehiclesByRouteId } = require('./endpoints');
 
+const ALLOWED_VEHICLES_TYPES = ['trolley', 'bus', 'tram'];
 
 /* GET all Vehicles */
 router.get('/vehicles/getAll', async (req, res) => {
-  // let data = await getVehiclesAll();
-  let data = null;
   try {
-    data = await getVehiclesAll();
+    const apiResponse = await getVehiclesAll();
+    return res.json(apiResponse);
   } catch (error) {
-    data = error;
+    return res.json({ Error: error });
   }
-  res.json(data);
-});
-
-/* GET specific route Vehicles with params */
-router.get('/vehicles/getByRouteId', (req, res) => {
-  // getVehicles?type=bus|tram|trolley&route=:id
-  if (!req.query.route) {
-    res.json({ error: 'route=(id:string) parameter required!' });
-  }
-  if (!req.query.type) {
-    res.json({ error: 'type=(bus|tram|trolley:string) parameter required!' });
-  }
-  const routeId = req.query.route;
-  const vehicleType = req.query.type;
-  console.log(routeId, parseInt(vehicleType, 10));
 });
 
 // for the (bus|tram|trolley)
-router.get('/vehicles/getAllByType', (req, res) => {
-  let vehicleType;
-  switch (req.query.type) {
-    case 'bus':
-      vehicleType = 2;
-      break;
-    case 'tram':
-      vehicleType = 3;
-      break;
-    case 'trolley':
-      vehicleType = 1;
-      break;
-    default:
-      vehicleType = req.query.type;
-      break;
+router.get('/vehicles/getAllByType', async (req, res) => {
+  if (!req.query.type) {
+    return res.status(400).json({ Error: 'Empty params list: "bus" or "tram" or "trolley" parameter required!' });
+  }
+  if (ALLOWED_VEHICLES_TYPES.indexOf(req.query.type) === -1) {
+    return res.status(400).json({ Error: 'Wrong params: type=<"bus" or "tram" or "trolley"> parameter required!' });
+  }
+  try {
+    const apiResponse = await getVehiclesByType(req.query.type);
+    return res.json(apiResponse);
+  } catch (error) {
+    return res.status(500).json({ Error: 'Something wrong with remote server. Try later.' });
   }
 });
 
+/* GET specific route Vehicles with params */
+router.get('/vehicles/getAllByRouteId', async (req, res) => {
+  // check if route exists
+  if (!req.query.route || !req.query.type) {
+    return res.status(400).json({ Error: 'type=<bus,tram,trolley>&route=<routeId> parameter required!' });
+  }
+  if (ALLOWED_VEHICLES_TYPES.indexOf(req.query.type) === -1) {
+    return res.status(400).json({ Error: 'type=<"bus" or "tram" or "trolley"> parameter required!' });
+  }
+  try {
+    const apiResponse = await getVehiclesByRouteId(req.query.type, req.query.route);
+    return res.status(200).json(apiResponse);
+  } catch (error) {
+    return res.status(500).json({ Error: 'Something wrong with remote server. Try later.' });
+  }
+});
+
+
 /* STOPS SECTION */
+// @@@ later
 // GET all Stops
-router.get('/stops/getAll', (req, res, next) => {
+router.get('/stops/getAll', (req, res) => {
+  res.json({ error: 'not yet implemented' });
 });
 
 // @@@
-router.get('/stops/getByName', (req, res, next) => {
+router.get('/stops/getByName', (req, res) => {
+  res.json({ error: 'not yet implemented' });
 });
 
 module.exports = router;

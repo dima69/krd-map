@@ -33,8 +33,6 @@ const wss = new webSocket.Server({ server });
 
 let wsClientsCount = 0;
 
-backgroundWorker();
-
 wss.on('connection', (ws, req) => {
   wsClientsCount += 1;
   console.log(`current websocket clients: ${wsClientsCount}`);
@@ -42,7 +40,7 @@ wss.on('connection', (ws, req) => {
     const msg = JSON.parse(data);
     switch (msg.type) {
       case 'transferData':
-        redisClient.get('latest_data', (err, reply) => {
+        redisClient.get('latest_vehicles_data', (err, reply) => {
           // reply is null when the key is missing
           if (reply) {
             ws.send(reply);
@@ -56,42 +54,18 @@ wss.on('connection', (ws, req) => {
         break;
     }
   });
-  ws.on('close', (code, reason) => {
+  ws.on('close', () => {
     wsClientsCount -= 1;
     console.log(`current websocket clients count: ${wsClientsCount}`);
   });
 });
 
-redisSub.subscribe('vehiclesdata');
+redisSub.subscribe('vehicles_data');
 redisSub.on('message', (channel, msg) => {
   wss.clients.forEach((client) => {
     client.send(msg);
   });
 });
-
-function onError(error) {
-  if (error.syscall !== 'listen') {
-    throw error;
-  }
-
-  let bind = typeof port === 'string'
-    ? `Pipe ${port}`
-    : `Port ${port}`;
-
-  // handle specific listen errors with friendly messages
-  switch (error.code) {
-    case 'EACCES':
-      console.error(`${bind} requires elevated privileges`);
-      process.exit(1);
-      break;
-    case 'EADDRINUSE':
-      console.error(`${bind} is already in use`);
-      process.exit(1);
-      break;
-    default:
-      throw error;
-  }
-}
 
 function onListening() {
   let addr = server.address();
@@ -101,8 +75,10 @@ function onListening() {
   debug(`Listening on ${bind}`);
 }
 
+backgroundWorker();
 server.listen(port);
-server.on('error', onError);
+// server.on('connection', () => ());
+server.on('error', (onError) => console.log(onError));
 server.on('listening', onListening);
 
 module.exports = app;

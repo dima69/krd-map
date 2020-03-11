@@ -40,9 +40,20 @@ function drawCustomIcon(vehicleType) {
   });
 }
 
-function drawMarkersMod(vehicles_array) {
+
+/*
+* [2, 14, 34.00, 46.00, 30, 180, 466]
+* item[0] = vehicle type (1=trolley, 2=bus, 3=tram)
+* item[1] = route id
+* item[2] = latitude
+* item[3] = longitude
+* item[4] = speed
+* item[5] = degree, vehicle's movement direction
+* item[6] = vehicle id
+*/
+function drawMarkersMod(vehiclesData) {
   markersLayer.clearLayers();
-  vehicles_array.forEach((item) => {
+  vehiclesData.forEach((item) => {
     let marker = L.marker([item[3], item[2]],
       { icon: drawCustomIcon(item[0], item[1]) })
       .bindPopup(`${item[6]}<br>route:${item[1]}<br>speed:${item[4]}<br>degree:${item[5]}`);
