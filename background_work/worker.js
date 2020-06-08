@@ -96,7 +96,7 @@ function initBackgroundWorker() {
     const gpsDataRaw = await axios.get(gpsDataUrl);
     const responseBody = gpsDataRaw.data;
     // '1' || 'number' in response == something wrong on remote server
-    if (responseBody === 'number') {
+    if (typeof responseBody === 'number') {
       console.log(`${responseBody} in response, something wrong with the GPS server`);
     } else {
       const modifiedDate = new Date(gpsDataRaw.headers['last-modified']);
@@ -112,6 +112,26 @@ function initBackgroundWorker() {
         console.info(`redisPubSub message status: ${pubSubMsgStatus}, rows inserted: ${insertedRows}`);
       }
     }
+  }));
+  job.start();
+}
+
+function initNew() {
+  console.log('init new worker');
+  const job = new CronJob('* * * * * *', (async () => {
+    const template = `${gpsDataUrl}?${+new Date()-1000}`;
+    console.log(template);
+    const gpsDataRaw = await axios.get(template);
+    const responseBody = gpsDataRaw.data;
+    // '1' || 'number' in response == something wrong on remote server
+    const modifiedDate = new Date();
+    const data = await parseGpsData(responseBody);
+    const [pubSubMsgStatus, insertedRows, mongoResult] = await Promise.all([
+      redisPublish(data),
+      redisInsert(data),
+      insertToMongoDB(data, modifiedDate), // for later use, analytics @@@ not yet
+    ]);
+    console.info(`redisPubSub message status: ${pubSubMsgStatus}, rows inserted: ${insertedRows}`);
   }));
   job.start();
 }

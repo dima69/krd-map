@@ -42,7 +42,6 @@ function getVehiclesByType(vehType) {
   });
 }
 
-// @@@ convert routeId to uppercase
 function getVehiclesByRouteId(vehType, routeId) {
   return new Promise((resolve, reject) => {
     const resp = [];
@@ -57,7 +56,7 @@ function getVehiclesByRouteId(vehType, routeId) {
       });
       redisBatch.exec((err, reply) => {
         reply.forEach((currentItem) => {
-          if (currentItem.routeId === routeId) {
+          if (currentItem.routeId === routeId.toUpperCase()) {
             resp.push(currentItem);
           }
         });

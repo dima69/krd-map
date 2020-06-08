@@ -38,6 +38,7 @@ router.get('/vehicles/getAllByRouteId', async (req, res) => {
   if (!req.query.route || !req.query.type) {
     return res.status(400).json({ Error: 'type=<bus,tram,trolley>&route=<routeId> parameter required!' });
   }
+  // -1 if not in array
   if (ALLOWED_VEHICLES_TYPES.indexOf(req.query.type) === -1) {
     return res.status(400).json({ Error: 'type=<"bus" or "tram" or "trolley"> parameter required!' });
   }
@@ -57,7 +58,6 @@ router.get('/stops/getAll', (req, res) => {
   res.json({ error: 'not yet implemented' });
 });
 
-// @@@
 router.get('/stops/getByName', (req, res) => {
   res.json({ error: 'not yet implemented' });
 });
